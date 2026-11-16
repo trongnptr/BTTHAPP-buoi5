@@ -1,0 +1,36 @@
+{
+  "rules": {
+    "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "chats": {
+      "$chatId": {
+        ".read": "auth != null && $chatId.contains(auth.uid)",
+        "messages": {
+          ".indexOn": ["createdAt"],
+          "$msgId": {
+            ".write": "auth != null && $chatId.contains(auth.uid) && newData.child('senderId').val() == auth.uid",
+            ".validate": "newData.hasChildren(['senderId', 'type', 'createdAt'])",
+            "text": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 2000"
+            },
+            "type": {
+              ".validate": "newData.val() == 'text' || newData.val() == 'location'"
+            }
+          }
+        }
+      }
+    },
+    "userChats": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        "$chatId": {
+          ".write": "auth != null && $chatId.contains(auth.uid) && $chatId.contains($uid)"
+        }
+      }
+    }
+  }
+}

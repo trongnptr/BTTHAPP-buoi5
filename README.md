@@ -1,97 +1,90 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Bài 5: Chat 1-1 realtime với Firebase (React Native CLI)
 
-# Getting Started
+Project này dùng React Native CLI (không Expo), TypeScript, React Navigation và Firebase JS SDK.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 1. Tạo project và cài thư viện
 
-## Step 1: Start Metro
-
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
-
-To start the Metro dev server, run the following command from the root of your React Native project:
-
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+```bash
+npx @react-native-community/cli@latest init ChatApp --skip-install
+cd ChatApp
 ```
 
-## Step 2: Build and run your app
+Sao chép các file trong thư mục này vào project vừa tạo. Ghi đè `App.tsx`, thêm thư mục `src/` và file `database.rules.json`.
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+Cài thư viện:
 
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```bash
+npm i firebase@^11.10.0 @react-native-async-storage/async-storage @react-native-community/geolocation
+npm i @react-navigation/native @react-navigation/native-stack @react-navigation/bottom-tabs
+npm i react-native-screens react-native-safe-area-context
 ```
 
-### iOS
+Với iOS, chạy thêm `cd ios && pod install && cd ..`.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+Không cần `google-services.json` hay `GoogleService-Info.plist` vì app dùng Firebase JS SDK với cấu hình viết trực tiếp trong code.
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+## 2. Cấu hình Firebase Console
 
-```sh
-bundle install
+1. Tạo project, thêm một **Web app** để lấy `firebaseConfig`.
+2. Dán cấu hình vào `src/services/firebase.ts`, nhớ sửa `databaseURL` đúng với region bạn chọn.
+3. **Authentication** → Sign-in method → bật **Email/Password**.
+4. **Realtime Database** → Create database → chọn region. Tab **Rules**: dán nội dung `database.rules.json` rồi Publish.
+
+## 3. Quyền truy cập
+
+**Android**, thêm vào `android/app/src/main/AndroidManifest.xml` (trong thẻ `<manifest>`):
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 ```
 
-Then, and every time you update your native dependencies, run:
+**iOS**, thêm vào `ios/ChatApp/Info.plist`:
 
-```sh
-bundle exec pod install
+```xml
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>Cần vị trí để gửi vị trí trong chat</string>
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## 4. Chạy app
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+```bash
+npx react-native start
+npx react-native run-android   # hoặc run-ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## 5. Cấu trúc dữ liệu
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+```
+users/{uid}                        { name, email, online, lastSeen }
+chats/{chatId}/messages/{msgId}    { senderId, type: 'text'|'location', text | location, createdAt }
+userChats/{uid}/{chatId}           { peerId, peerName, lastMessage, lastTime, unread }
+```
 
-## Step 3: Modify your app
+`chatId` là hai uid sắp xếp rồi nối bằng `_`.
 
-Now that you have successfully run the app, let's make changes!
+## 6. Cấu trúc thư mục
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+```
+App.tsx
+database.rules.json
+src/
+  services/     firebase.ts, auth.ts, presence.ts, users.ts, chat.ts, location.ts
+  context/      AuthContext.tsx
+  navigation/   RootNavigator.tsx, MainTabs.tsx
+  screens/      LoginScreen, RegisterScreen, HomeScreen, ContactsScreen,
+                ChatScreen, NotificationsScreen, SettingsScreen
+  components/   Avatar.tsx
+  utils/        format.ts
+  types/        index.ts
+  theme.ts
+```
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## 7. Ghi chú
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- **Màn hình Thông báo:** Bài 4 không có màn hình này nên màn Thông báo được làm mới. Nó liệt kê các cuộc trò chuyện còn tin chưa đọc và hiện số chưa đọc trên tab.
+- **Trạng thái online:** dùng `.info/connected` và `onDisconnect`, nên khi app bị tắt hoặc mất mạng, trạng thái tự chuyển về offline.
+- **Hủy listener:** mọi `onValue` và `onChildAdded` đều trả về hàm hủy và được gọi trong cleanup của `useEffect`.
+- **Thời gian tin nhắn** lấy từ đồng hồ thiết bị gửi (`Date.now()`). Với bài tập đủ dùng. Nếu cần thứ tự chính xác tuyệt đối giữa các thiết bị, đổi sang `serverTimestamp()`.
+- Chưa chạy build trên máy thật trong lúc viết, nên nếu có lỗi khi `npm run` hoặc khi build, gửi log cho tôi để sửa.
